@@ -24,10 +24,7 @@ def get_snowpark_session() -> Session:
 def main():
     session = get_snowpark_session()
 
-    # TRANSFORMATIONS:
-
-    # transport
-
+ # transport
     transport_df = session.sql("""
                             select
                                 id,
@@ -49,16 +46,24 @@ def main():
                                 transit
                             from raw_transport
                                 """)
-    transport_df.write.save_as_table('curated.curated_transport', mode='append')
+    try:
+        transport_df.write.save_as_table('curated.curated_transport', mode='truncate')
+        logging.info('Successfully updated table curated_transport')
+    except Exception as e:
+        logging.error('Error occured during updating table curated_transport:', e)
 
     # merging raw accessibility tables into 1
 
-    access1_df = session.sql('select * from RAW_ACCESSIBILITY_1')
-    access2_df = session.sql('select * from RAW_ACCESSIBILITY_2')
+    access1_df = session.table('raw_accessibility_1')
+    access2_df = session.table('raw_accessibility_2')
     toilets_df = session.sql('select distinct parent_sloid, designation, wheelchair_accessibility from raw_toilets')
-    access_merged_df = access1_df.join(access2_df, access1_df['sloid']==access2_df['sloid'], join_type='outer').drop(access2_df['sloid'])
+    access_merged_df = access1_df.join(access2_df,
+                                access1_df['sloid']==access2_df['sloid'],
+                                join_type='outer').drop(access2_df['sloid'])
     access_merged_df = access_merged_df.withColumnRenamed(access_merged_df.columns[0], 'sloid')
-    access_full_df = access_merged_df.join(toilets_df, access_merged_df['sloid']==toilets_df['parent_sloid'], join_type='left').drop(toilets_df['parent_sloid'])
+    access_full_df = access_merged_df.join(toilets_df,
+                                access_merged_df['sloid']==toilets_df['parent_sloid'],
+                                join_type='left').drop(toilets_df['parent_sloid'])
     access_full_df = access_full_df.withColumnRenamed(access_full_df.columns[0],'sloid')
     access_full_df = access_full_df.select(
         col('sloid'),
@@ -87,14 +92,22 @@ def main():
         col('wheelchair_accessibility').alias('toilet_wheelchair_access')
     )
     # access_full_df.show(50)
-    access_full_df.write.save_as_table('curated.curated_accessibility', mode ='append')
+    try:
+        access_full_df.write.save_as_table('curated.curated_accessibility', mode ='truncate')
+        logging.info('Successfully updated table curated_accessibility')
+    except Exception as e:
+        logging.error('Error occured during updating table curated_accessibility:', e)
 
     # transforming transport_subtypes table
 
-    trans_subtypes_df = session.sql('select * from raw_transport_subtypes')
-    trans_subtypes_df = trans_subtypes_df.withColumn('international',when(col('international').is_null(),'false').otherwise(col('international')))
-    trans_subtypes_df = trans_subtypes_df.withColumn('public_use',when(col('public_use').is_null(),'false').otherwise(col('public_use')))
-    trans_subtypes_df = trans_subtypes_df.withColumn('ref_netex_transportsubmode',when(col('ref_netex_transportsubmode').like('%OR%'),split(col('ref_netex_transportsubmode'),lit(' '))[0]).otherwise(col('ref_netex_transportsubmode')))
+    trans_subtypes_df = session.table('raw_transport_subtypes')
+    trans_subtypes_df = trans_subtypes_df.withColumn('international',
+                                    when(col('international').is_null(),'false').otherwise(col('international')))
+    trans_subtypes_df = trans_subtypes_df.withColumn('public_use',
+                                    when(col('public_use').is_null(),'false').otherwise(col('public_use')))
+    trans_subtypes_df = trans_subtypes_df.withColumn('ref_netex_transportsubmode',
+                                    when(col('ref_netex_transportsubmode').like('%OR%'),
+                                    split(col('ref_netex_transportsubmode'),lit(' '))[0]).otherwise(col('ref_netex_transportsubmode')))
     trans_subtypes_df = trans_subtypes_df.select(
         col('vehicle_id'),
         col('vehicle_type_DE'),
@@ -105,12 +118,17 @@ def main():
         col('ref_netex_transportsubmode'),
         col('ref_netex_productcategoryref')
     )
-    trans_subtypes_df.write.save_as_table('curated.curated_vehicles', mode='append')
+    try:
+        trans_subtypes_df.write.save_as_table('curated.curated_vehicles', mode='truncate')
+        logging.info('Successfully updated table curated_vehicles')
+    except Exception as e:
+        logging.error('Error occured during updating table curated_vehicles:', e)
 
     # transforming transport_types table
 
-    trans_types_df = session.sql('select * from raw_transport_types')
-    trans_types_df = trans_types_df.withColumn('international',when(col('international').is_null(),'false').otherwise(col('international')))
+    trans_types_df = session.table('raw_transport_types')
+    trans_types_df = trans_types_df.withColumn('international',
+                                    when(col('international').is_null(),'false').otherwise(col('international')))
     trans_types_df = trans_types_df.drop(trans_types_df['CH'])
     trans_types_df = trans_types_df.select(
         col('transport_type_id'),
@@ -119,14 +137,21 @@ def main():
         col('international'),
         col('ref_netex')
     )
-    trans_types_df.write.save_as_table('curated.curated_transport_types', mode='append')
+    try:
+        trans_types_df.write.save_as_table('curated.curated_transport_types', mode='truncate')
+        logging.info('Successfully updated table curated_transport_types')
+    except Exception as e:
+        logging.error('Error occured during updating table curated_transport_types:', e)
 
     # transforming line_data table
 
-    line_data_df = session.sql('select * from raw_line_data')
-    line_data_df = line_data_df.withColumn('departure_station', when(col('description').like('% - %'),split(col('description'),lit(' -'))[0]).otherwise('None'))
-    line_data_df = line_data_df.withColumn('final_destination', when(col('description').like('% - %'), substring_index(col('description'),lit(' -'), -1)).otherwise('None'))
-    line_data_df = line_data_df.withColumn('midstation_count', when(col('description').like('% - %'), regexp_count(col('description'),' -') - 1).otherwise(0))
+    line_data_df = session.table('raw_line_data')
+    line_data_df = line_data_df.withColumn('departure_station',
+                    when(col('description').like('% - %'),split(col('description'),lit(' -'))[0]).otherwise('None'))
+    line_data_df = line_data_df.withColumn('final_destination',
+                    when(col('description').like('% - %'), substring_index(col('description'),lit(' -'), -1)).otherwise('None'))
+    line_data_df = line_data_df.withColumn('midstation_count',
+                    when(col('description').like('% - %'), regexp_count(col('description'),' -') - 1).otherwise(0))
     line_data_df.drop_duplicates(subset = ['line_id'])
     line_data_df = line_data_df.select(
         col('slnid'),
@@ -141,8 +166,11 @@ def main():
         col('midstation_count'),
         col('description')
     )
-
-    line_data_df.write.save_as_table('curated.curated_line_data', mode='append')
+    try:
+        line_data_df.write.save_as_table('curated.curated_line_data', mode='truncate')
+        logging.info('Successfully updated table curated_line_data')
+    except Exception as e:
+        logging.error('Error occured during updating table curated_line_data:', e)
 
     # transforming business table (from operators)
 
@@ -154,12 +182,20 @@ def main():
         col('business_type_FR'),
         col('business_type_IT')
     )
-    business_types_df.write.save_as_table('curated.curated_business_types', mode='append')
+    try:
+        business_types_df.write.save_as_table('curated.curated_business_types', mode='truncate')
+        logging.info('Successfully updated table curated_business_types')
+    except Exception as e:
+        logging.error('Error occured during updating table curated_business_types:', e)
 
     # transforming operators table
-    operators_df = session.sql('select distinct sboid, said, abbreviation, company_name, description, status, business_type_id from raw_operators')
-    operators_df = operators_df.withColumn('business_type_id', when(col('business_type_id').like('%,%'), split(col('business_type_id'), lit(','))[0]).otherwise(col('business_type_id')))
-    operators_df = operators_df.withColumn('company_name', when(col('company_name').is_null(), col('description')).otherwise(col('company_name')))
+    operators_df = session.sql(
+        'select distinct sboid, said, abbreviation, company_name, description, status, business_type_id from raw_operators')
+    operators_df = operators_df.withColumn('business_type_id',
+                    when(col('business_type_id').like('%,%'),
+                    split(col('business_type_id'), lit(','))[0]).otherwise(col('business_type_id')))
+    operators_df = operators_df.withColumn('company_name',
+                    when(col('company_name').is_null(), col('description')).otherwise(col('company_name')))
     operators_df = operators_df.select(
         col('sboid'),
         col('said'),
@@ -169,12 +205,20 @@ def main():
         col('status'),
         col('business_type_id')
     )
-    operators_df.write.save_as_table('curated.curated_operators', mode='append')
+    try:
+        operators_df.write.save_as_table('curated.curated_operators', mode='truncate')
+        logging.info('Successfully updated table curated_operators')
+    except Exception as e:
+        logging.error('Error occured during updating table curated_operators:', e)
 
     # transforming stop table
 
     municipality_df = session.sql('select distinct municipality_id, municipality from raw_stop_data')
-    municipality_df.write.save_as_table('curated.curated_municipality_data', mode='append')
+    try:
+        municipality_df.write.save_as_table('curated.curated_municipality_data', mode='truncate')
+        logging.info('Successfully updated table curated_municipality_data')
+    except Exception as e:
+        logging.error('Error occured during updating table curated_municipality_data:', e)
 
     stop_data_df = session.sql("""
                             select
@@ -194,7 +238,11 @@ def main():
                             on sd.stop_id = od.stop_id
                             """)
     stop_data_df = stop_data_df.withColumn('sloid', concat(lit('ch:1:sloid:'),stop_data_df['stop_id'] - 8500000))
-    stop_data_df.write.save_as_table('curated.curated_stop_data', mode='append')
+    try:
+        stop_data_df.write.save_as_table('curated.curated_stop_data', mode='truncate')
+        logging.info('Successfully updated table curated_stop_data')
+    except Exception as e:
+        logging.error('Error occured during updating table curated_stop_data:', e)
 
 #occupancy # co z rokiem gdy zmieni sie plik??
     occupancy_df = session.sql("""
@@ -212,7 +260,11 @@ def main():
                         where od1.year = '2022'
                             and od2.year = '2018'
                             """)
-    occupancy_df.write.save_as_table('curated.curated_occupancy', mode='append')
+    try:
+        occupancy_df.write.save_as_table('curated.curated_occupancy', mode='truncate')
+        logging.info('Successfully updated table curated_occupancy')
+    except Exception as e:
+        logging.error('Error occured during updating table curated_occupancy:', e)
 
 #parking data
     bike_parking_df = session.sql('select stop_id, capacity from raw_bike_parking_data')
@@ -227,8 +279,11 @@ def main():
     parking_df = parking_df.join(bike_parking_df, parking_df['stop_id'] == bike_parking_df['stop_id'],
                                  join_type='inner').drop(bike_parking_df['stop_id'])
     parking_df = parking_df.withColumnRenamed(parking_df.columns[0], 'stop_id')
-    parking_df.show(5)
-    parking_df.write.save_as_table('curated.curated_parking', mode='append')
+    try:
+        parking_df.write.save_as_table('curated.curated_parking', mode='truncate')
+        logging.info('Successfully updated table curated_parking')
+    except Exception as e:
+        logging.error('Error occured during updating table curated_parking:', e)
 
 if __name__ == '__main__':
     main()
