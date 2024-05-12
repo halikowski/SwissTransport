@@ -66,7 +66,7 @@ def main():
     operators_dim_df = operators_dim_df.drop('operator_abbr')
     try:
         operators_dim_df.write.save_as_table('consumption.operators_dim', mode='truncate')
-        logging.info('Successfully updated operators_dim tabe')
+        logging.info('Successfully updated operators_dim table')
     except Exception as e:
         logging.error('Error occured during updating table operators_dim:', e)
 
@@ -75,7 +75,7 @@ def main():
     accessibility_dim_df = curated_accessibility_df.na.drop(subset=['sloid'])
     try:
         accessibility_dim_df.write.save_as_table('consumption.accessibility_dim', mode='truncate')
-        logging.info('Successfully updated accessibility_dim tabe')
+        logging.info('Successfully updated accessibility_dim table')
     except Exception as e:
         logging.error('Error occured during updating table accessibility_dim',e )
 

@@ -80,7 +80,7 @@ def main():
         col('t_spare_transport'),
         col('o_spare_transport'),
         col('platform'),
-        access_merged_df['parent_sloid'],
+        access_merged_df['parent_sloid'].alias('parent_sloid'),
         col('height'),
         col('inclination'),
         col('info_type'),
@@ -91,7 +91,7 @@ def main():
         col('designation').alias('toilet_designation'),
         col('wheelchair_accessibility').alias('toilet_wheelchair_access')
     )
-    # access_full_df.show(50)
+
     try:
         access_full_df.write.save_as_table('curated.curated_accessibility', mode ='truncate')
         logging.info('Successfully updated table curated_accessibility')
@@ -152,7 +152,7 @@ def main():
                     when(col('description').like('% - %'), substring_index(col('description'),lit(' -'), -1)).otherwise('None'))
     line_data_df = line_data_df.withColumn('midstation_count',
                     when(col('description').like('% - %'), regexp_count(col('description'),' -') - 1).otherwise(0))
-    line_data_df.drop_duplicates(subset = ['line_id'])
+    line_data_df.drop_duplicates('line_id')
     line_data_df = line_data_df.select(
         col('slnid'),
         col('swisslinenumber').alias('swiss_line_number'),
@@ -251,9 +251,9 @@ def main():
                             to_number(replace(od1.avg_daily_traffic,' ',''),38,0) as avg_daily_traffic,
                             to_number(replace(od1.avg_wday_traffic,' ',''),38,0) as avg_wday_traffic,
                             to_number(replace(od1.avg_holiday_traffic,' ',''),38,0) as avg_holiday_traffic,
-                            to_number(replace(od1.avg_daily_traffic,' ',''),38,0) - to_number(replace(od2.avg_daily_traffic,' ',''),38,0) as daily_2018_odds,
-                            to_number(replace(od1.avg_wday_traffic,' ',''),38,0) - to_number(replace(od2.avg_wday_traffic,' ',''),38,0) as wday_2018_odds,
-                            to_number(replace(od1.avg_holiday_traffic,' ',''),38,0) - to_number(replace(od2.avg_holiday_traffic,' ',''),38,0) as holiday_2018_odds
+                            to_number(replace(od1.avg_daily_traffic,' ',''),38,0) - to_number(replace(od2.avg_daily_traffic,' ',''),38,0) as daily_odds_2018,
+                            to_number(replace(od1.avg_wday_traffic,' ',''),38,0) - to_number(replace(od2.avg_wday_traffic,' ',''),38,0) as wday_odds_2018,
+                            to_number(replace(od1.avg_holiday_traffic,' ',''),38,0) - to_number(replace(od2.avg_holiday_traffic,' ',''),38,0) as holiday_odds_2018
                         from raw_occupancy_data od1
                         inner join raw_occupancy_data od2
                         on od1.stop_id = od2.stop_id
