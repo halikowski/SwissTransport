@@ -5,10 +5,26 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import time
-from utensils import get_downloaded_filename, download_file
+from utensils import get_downloaded_filename, download_file, snowsql_ingest
+import snowflake.connector
+import pandas as pd
+import os
 
 # initiate logging at info level
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
+
+# snowflake connection
+connection_parameters = {
+    "account":"iigqpyy-qq30975",
+    "user":"user_01",
+    "password":"Snowp4rk",
+    "role":"SYSADMIN",
+    "database":"SWISS_TRANSPORT",
+    "schema":"RAW",
+    "warehouse":"TRANSPORT_WH",
+    'login':'true'
+    }
+conn = snowflake.connector.connect(**connection_parameters)
 
 # Driver setup
 chrome_options = webdriver.ChromeOptions()
@@ -19,6 +35,8 @@ driver = webdriver.Chrome(options=chrome_options)
 driver.get("https://opentransportdata.swiss/en/group")
 driver.implicitly_wait(5)
 driver.maximize_window()
+
+files_directory = r'C:/Users/Mateusz/Downloads/transport/yearly'
 
 # Downloading Passengers boarding and alighting.xlsx file (old name frequentia)
 try:
@@ -35,6 +53,18 @@ try:
 except (TimeoutException, NoSuchElementException) as e:
     logging.error('An error occured while locating or clicking elements:', e)
 
+df = pd.read_excel(f'{files_directory}/{filename}')
+filename = 'Occupancy_data.csv'
+df.to_csv(filename, index=False)
 
+file_path = os.path.join(files_directory, filename)
+if os.path.exists(file_path):
+    try:
+        snowsql_ingest(files_directory, filename, 'yearly/occupancy_files')
+        logging.info(f'Successfully uploaded {filename} to my_stg/yearly/occupancy_fles')
+    except Exception as e:
+        logging.error(f'Error occured during uploading {filename} to internal stage.', e)
+
+conn.close()
 time.sleep(5)
 driver.quit()
