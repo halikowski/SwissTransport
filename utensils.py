@@ -4,6 +4,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import subprocess
+from snowflake.snowpark import Session
+
 
 
 def navigate_to_category(driver,category_title):
@@ -53,7 +55,7 @@ def get_downloaded_filename(driver):
                     .map(e => e.filePath || e.file_path || e.fileUrl || e.file_url);
                     """)
     # wait for all the downloads to be completed
-    WebDriverWait(driver, 360, 1).until(chrome_downloads)  # returns list of downloaded file paths
+    WebDriverWait(driver, 1200, 1).until(chrome_downloads)  # returns list of downloaded file paths
     # get latest downloaded file name and path
     time.sleep(10)
     dl_filename = driver.execute_script("""
@@ -74,3 +76,16 @@ def snowsql_ingest(directory, filename, stg_folder):
         Each file has it's own dedicated folder. """
     subprocess.run(['snowsql', '-q',
                     f"PUT file://{directory}/{filename} @my_stg/{stg_folder} auto_compress=true"])
+
+def get_snowpark_session() -> Session:
+    connection_parameters = {
+       "ACCOUNT":"iigqpyy-qq30975",
+        "USER":"user_01",
+        "PASSWORD":"Snowp4rk",
+        "ROLE":"SYSADMIN",
+        "DATABASE":"SWISS_TRANSPORT",
+        "SCHEMA":"RAW",
+        "WAREHOUSE":"TRANSPORT_WH"
+    }
+    # creating snowflake session object
+    return Session.builder.configs(connection_parameters).create()
