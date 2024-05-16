@@ -1,4 +1,3 @@
-from snowflake.snowpark import Session
 from snowflake.snowpark.functions import col
 from googletrans import Translator
 import sys
@@ -8,25 +7,7 @@ import logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%I:%M:%S')
 
-
-def get_snowpark_session() -> Session:
-    connection_parameters = {
-       "ACCOUNT":"iigqpyy-qq30975",
-        "USER":"user_01",
-        "PASSWORD":"Snowp4rk",
-        "ROLE":"SYSADMIN",
-        "DATABASE":"SWISS_TRANSPORT",
-        "SCHEMA":"consumption",
-        "WAREHOUSE":"TRANSPORT_WH"
-    }
-    # creating snowflake session object
-    return Session.builder.configs(connection_parameters).create()
-
-
-def main():
-    session = get_snowpark_session()
-
-# transport_fact
+def update_transport_fact(session):
     transport_fact_df = session.sql("""
                                 select
                                     transport_fact_seq.nextval as id,
@@ -54,7 +35,8 @@ def main():
     except Exception as e:
         logging.error('Error occured during updating the table transport_fact:', e)
 
-# operators_dim
+
+def update_operators_dim(session):
     curated_operators_df = session.table('curated.curated_operators')
     trips_count_df = session.sql("""select operator_abbr, count(*) as trips_count
                                                             FROM transport_fact
@@ -70,7 +52,7 @@ def main():
     except Exception as e:
         logging.error('Error occured during updating table operators_dim:', e)
 
-# accessibility_dim
+def update_accessibilty_dim(session):
     curated_accessibility_df = session.table('curated.curated_accessibility')
     accessibility_dim_df = curated_accessibility_df.na.drop(subset=['sloid'])
     try:
@@ -79,6 +61,8 @@ def main():
     except Exception as e:
         logging.error('Error occured during updating table accessibility_dim',e )
 
+
+def update_business_types_dim(session):
 # # business_types_dim
 # #     @udf(packages=['googletrans'])
 # #     def translate_de_to_en(text: str) -> str:
@@ -93,7 +77,8 @@ def main():
     except Exception as e:
         logging.error('Error occured during updating table business_types_dim:', e)
 
-# # lines_dim
+
+def update_lines_dim(session):
     curated_lines_df = session.table('curated.curated_line_data')
     lines_dim = curated_lines_df.na.drop(subset=['line_id'])
     try:
@@ -102,7 +87,8 @@ def main():
     except Exception as e:
         logging.error('Error occured during updating table lines_dim:', e)
 
-# # municipality_dim
+
+def update_municipality_dim(session):
     curated_municipality_df = session.table('curated.curated_municipality_data')
     municipality_dim = curated_municipality_df.na.drop(subset=['municipality_id'])
     try:
@@ -111,7 +97,8 @@ def main():
     except Exception as e:
         logging.error('Error occured during updating table municipality_dim:', e)
 
-# # occupancy_dim
+
+def update_occupancy_dim(session):
     curated_occupancy_df = session.table('curated.curated_occupancy')
     occupancy_dim_df = curated_occupancy_df.na.drop(subset=['stop_id'])
     try:
@@ -120,7 +107,8 @@ def main():
     except Exception as e:
         logging.error('Error occured during updating table occupancy_dim:', e)
 #
-# # parking_dim
+
+def update_parking_dim(session):
     curated_parking_df = session.table('curated.curated_parking')
     parking_dim_df = curated_parking_df.na.drop(subset=['stop_id'])
     try:
@@ -129,7 +117,8 @@ def main():
     except Exception as e:
         logging.error('Error occured during updating table parking_dim:', e)
 
-# # stops_dim
+
+def update_stops_dim(session):
     curated_stops_df = session.table('curated.curated_stop_data')
     stops_dim = curated_stops_df.na.drop(subset=['stop_id'])
     try:
@@ -138,7 +127,8 @@ def main():
     except Exception as e:
         logging.error('Error occured during updating table stops_dim:', e)
 
-# # transport_types_dim
+
+def update_transport_types_dim(session):
     curated_transport_types_df = session.table('curated.curated_transport_types')
     transport_types_dim_df = curated_transport_types_df.na.drop(subset=['transport_type_id'])
     try:
@@ -147,7 +137,8 @@ def main():
     except Exception as e:
         logging.error('Error occured during updating table transport_types_dim:', e)
 
-# # vehicles_dim
+
+def update_vehicles_dim(session):
     curated_vehicles_df = session.table('curated.curated_vehicles').na.drop(subset=['vehicle_id'])
     trips_per_vehicle_df = session.sql("""select vehicle_id, count(*) as vehicle_trips_count
                                                                 FROM transport_fact
@@ -162,6 +153,3 @@ def main():
         logging.info('Successfully updated vehicles_dim table')
     except Exception as e:
         logging.error('Error occured during updating table vehicles_dim:', e)
-
-if __name__ == '__main__':
-    main()
