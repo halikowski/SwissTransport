@@ -8,6 +8,7 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from utensils import navigate_to_category, download_file, get_downloaded_filename, snowsql_ingest
 import snowflake.connector
 import os
+from raw import load_raw_bike_parking_data, load_raw_parking_data, load_raw_transport_types, load_raw_transport_subtypes
 
 files_directory = r'C:/Users/Mateusz/Downloads/transport/monthly'
 
@@ -38,13 +39,13 @@ driver.implicitly_wait(5)
 driver.maximize_window()
 
 categories = [
-    ('View Further mobility data','bike-parking', 0,'monthly/bike_files'),
-    ('View Further mobility data','vm-liste', 0, 'monthly/tsub_files'),
-    ('View Further mobility data','parking-facilities', 0, 'parking_files'),
-    ('View Further mobility data','vm-liste', 1,'tmode_files')
+    ('View Further mobility data','bike-parking', 0,'monthly/bike_files', load_raw_bike_parking_data),
+    ('View Further mobility data','vm-liste', 0, 'monthly/tsub_files', load_raw_transport_subtypes),
+    ('View Further mobility data','parking-facilities', 0, 'parking_files',load_raw_parking_data),
+    ('View Further mobility data','vm-liste', 1,'tmode_files',load_raw_transport_types)
 ]
 
-for category_name, dataset_link, file_position, destination in categories:
+for category_name, dataset_link, file_position, destination, load_func  in categories:
     navigate_to_category(driver, category_name)
     try:
         dataset_element = WebDriverWait(driver,10).until(
@@ -69,8 +70,11 @@ for category_name, dataset_link, file_position, destination in categories:
         try:
             snowsql_ingest(files_directory, filename, destination)
             logging.info(f'Successfully uploaded {filename} to my_stg/{destination}')
+            load_func()
         except Exception as e:
             logging.error(f'Error occured during uploading {filename} to internal stage.', e)
+
+# yet to add removal of the files from download folder as next step
 
 conn.close()
 time.sleep(5)

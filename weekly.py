@@ -10,6 +10,7 @@ import snowflake.connector
 import zipfile
 import pandas as pd
 import os
+from raw import load_raw_line_data, load_raw_accessibility_1, load_raw_toilets, load_raw_stop_data, load_raw_accessibility_2, load_raw_operators
 
 files_directory = r'C:/Users/Mateusz/Downloads/transport/weekly'
 
@@ -40,17 +41,15 @@ driver.implicitly_wait(5)
 driver.maximize_window()
 
 categories = [
-    ('View Further mobility data','slnid-line', 0, 'zip','weekly/line_files'),
-    ('View Service Points Master Data','bfr-rollstuhl', 1,'csv','weekly/bfr_files'),
-    ('View Service Points Master Data','prm-toilet-full', 0, 'zip','weekly/full_toilet_files'),
-    ('View Service Points Master Data','prm-toilet-actual-date', 0, 'zip','weekly/toilet_files'),
-    ('View Service Points Master Data','prm-stop_point-actual-date', 0, 'zip','weekly/stop_files'),
-    ('View Service Points Master Data','prm-platform-actual-date', 0, 'zip','weekly/platform_files'),
-    ('View Service Points Master Data','bav_liste', 1, 'xlsx','weekly/bav_files'),
-    ("View Business organisations", "business-organisations", 0, 'zip','weekly/org_files')
+    ('View Further mobility data','slnid-line', 0, 'zip','weekly/line_files', load_raw_line_data),
+    ('View Service Points Master Data','bfr-rollstuhl', 1,'csv','weekly/bfr_files',load_raw_accessibility_1),
+    ('View Service Points Master Data','prm-toilet-full', 0, 'zip','weekly/full_toilet_files', load_raw_toilets),
+    ('View Service Points Master Data','prm-platform-actual-date', 0, 'zip','weekly/platform_files', load_raw_accessibility_2),
+    ('View Service Points Master Data','bav_liste', 1, 'xlsx','weekly/bav_files', load_raw_stop_data),
+    ("View Business organisations", "business-organisations", 0, 'zip','weekly/org_files',load_raw_operators)
 ]
 
-for category_name, dataset_link, file_position, file_format, destination in categories:
+for category_name, dataset_link, file_position, file_format, destination, load_func in categories:
     navigate_to_category(driver, category_name)
     try:
         dataset_element = WebDriverWait(driver,10).until(
@@ -88,8 +87,10 @@ for category_name, dataset_link, file_position, file_format, destination in cate
         try:
             snowsql_ingest(files_directory, filename, destination)
             logging.info(f'Successfully uploaded {filename} to my_stg/{destination}')
+            load_func()
         except Exception as e:
             logging.error(f'Error occured during uploading {filename} to internal stage.', e)
+# yet to add removal of the files from download folder as next step
 
 conn.close()
 time.sleep(5)

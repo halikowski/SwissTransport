@@ -9,6 +9,7 @@ from utensils import get_downloaded_filename, download_file, snowsql_ingest
 import snowflake.connector
 import pandas as pd
 import os
+from raw import load_raw_occupancy_data
 
 # initiate logging at info level
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
@@ -25,6 +26,7 @@ connection_parameters = {
     'login':'true'
     }
 conn = snowflake.connector.connect(**connection_parameters)
+sf_session = get_snowpark_session()
 
 # Driver setup
 chrome_options = webdriver.ChromeOptions()
@@ -64,6 +66,16 @@ if os.path.exists(file_path):
         logging.info(f'Successfully uploaded {filename} to my_stg/yearly/occupancy_fles')
     except Exception as e:
         logging.error(f'Error occured during uploading {filename} to internal stage.', e)
+# copy into table raw_occupancy_data
+load_raw_occupancy_data(sf_session)
+# remove file from download folder
+try:
+    os.remove(file_path)
+    print(f"File '{file_path}' successfully deleted.")
+except FileNotFoundError:
+    print(f"File '{file_path}' not found.")
+except Exception as e:
+    print(f"An error occurred: {e}")
 
 conn.close()
 time.sleep(5)
