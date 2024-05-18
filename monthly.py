@@ -5,10 +5,13 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
-from utensils import navigate_to_category, download_file, get_downloaded_filename, snowsql_ingest
+from utensils import navigate_to_category, download_file, get_downloaded_filename, snowsql_ingest, connection_parameters, get_snowpark_session, setup_selenium_driver, remove_file
 import snowflake.connector
 import os
 from raw import load_raw_bike_parking_data, load_raw_parking_data, load_raw_transport_types, load_raw_transport_subtypes
+import zipfile
+import pandas as pd
+
 
 files_directory = r'C:/Users/Mateusz/Downloads/transport/monthly'
 
@@ -16,36 +19,20 @@ files_directory = r'C:/Users/Mateusz/Downloads/transport/monthly'
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 
 # snowflake connection
-connection_parameters = {
-    "account":"iigqpyy-qq30975",
-    "user":"user_01",
-    "password":"Snowp4rk",
-    "role":"SYSADMIN",
-    "database":"SWISS_TRANSPORT",
-    "schema":"RAW",
-    "warehouse":"TRANSPORT_WH",
-    'login':'true'
-    }
-
 conn = snowflake.connector.connect(**connection_parameters)
+sf_session = get_snowpark_session()
 
 # Driver setup
-chrome_options = webdriver.ChromeOptions()
-prefs = {"download.default_directory" : r"C:\Users\Mateusz\Downloads\transport\monthly"}
-chrome_options.add_experimental_option("prefs", prefs)
-chrome_options.add_experimental_option("detach",True)
-driver = webdriver.Chrome(options=chrome_options)
-driver.implicitly_wait(5)
-driver.maximize_window()
+driver = setup_selenium_driver(files_directory)
 
 categories = [
-    ('View Further mobility data','bike-parking', 0,'monthly/bike_files', load_raw_bike_parking_data),
-    ('View Further mobility data','vm-liste', 0, 'monthly/tsub_files', load_raw_transport_subtypes),
-    ('View Further mobility data','parking-facilities', 0, 'parking_files',load_raw_parking_data),
-    ('View Further mobility data','vm-liste', 1,'tmode_files',load_raw_transport_types)
+    ('View Further mobility data','bike-parking', 0, 'json', 'monthly/bike_files', load_raw_bike_parking_data),
+    ('View Further mobility data','vm-liste', 0, 'csv', 'monthly/tsub_files', load_raw_transport_subtypes),
+    ('View Further mobility data','parking-facilities', 0, 'json', 'parking_files',load_raw_parking_data),
+    ('View Further mobility data','vm-liste', 1,'tmode_files','csv', load_raw_transport_types)
 ]
 
-for category_name, dataset_link, file_position, destination, load_func  in categories:
+for category_name, dataset_link, file_position, file_format, destination, load_func in categories:
     navigate_to_category(driver, category_name)
     try:
         dataset_element = WebDriverWait(driver,10).until(
@@ -64,6 +51,24 @@ for category_name, dataset_link, file_position, destination, load_func  in categ
     logging.info(f"Successfully downloaded file {filename}")
     time.sleep(10)
     driver.execute_script("window.history.go(-1)")
+
+    # File format handling
+    if file_format == 'zip':
+        zip_file = f'{files_directory}/{filename}'
+        extract_to = files_directory
+        with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+            zip_ref.extractall(extract_to)
+        filename = filename.replace('.zip', '')
+    elif file_format == 'xlsx':
+        df = pd.read_excel(f'{files_directory}/{filename}')
+        if filename == 'BAV_List_current_timetable.xlsx':
+            df.drop(index=range(1,4), inplace=True)
+        df.drop(index=range(1, 4), inplace=True)
+        filename = filename.replace('xlsx', 'csv')
+        df.to_csv(filename, index=False)
+    else:
+        filename = filename.replace(' ', '')
+
     # ingest the downloaded file to snowflake internal stage
     file_path = os.path.join(files_directory, filename)
     if os.path.exists(file_path):
@@ -74,7 +79,15 @@ for category_name, dataset_link, file_position, destination, load_func  in categ
         except Exception as e:
             logging.error(f'Error occured during uploading {filename} to internal stage.', e)
 
-# yet to add removal of the files from download folder as next step
+    # copy into table from internal stage
+    try:
+        load_func(sf_session)
+        logging.info(f'Successfully copied data from {destination} to raw table')
+    except Exception as e:
+        logging.error(f'Error occured during copying data from {destination} to raw table:', e)
+
+    # remove file from download folder
+    remove_file(file_path)
 
 conn.close()
 time.sleep(5)

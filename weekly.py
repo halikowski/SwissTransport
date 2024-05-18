@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
-from utensils import navigate_to_category, get_downloaded_filename, download_file, snowsql_ingest
+from utensils import navigate_to_category, get_downloaded_filename, download_file, snowsql_ingest, get_snowpark_session, remove_file, connection_parameters, setup_selenium_driver
 import snowflake.connector
 import zipfile
 import pandas as pd
@@ -18,29 +18,14 @@ files_directory = r'C:/Users/Mateusz/Downloads/transport/weekly'
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 
 # snowflake connection
-connection_parameters = {
-    "account":"iigqpyy-qq30975",
-    "user":"user_01",
-    "password":"Snowp4rk",
-    "role":"SYSADMIN",
-    "database":"SWISS_TRANSPORT",
-    "schema":"RAW",
-    "warehouse":"TRANSPORT_WH",
-    'login':'true'
-    }
-
 conn = snowflake.connector.connect(**connection_parameters)
+sf_session = get_snowpark_session()
 
 # Driver setup
-chrome_options = webdriver.ChromeOptions()
-prefs = {"download.default_directory" : r"C:\Users\Mateusz\Downloads\transport\weekly"}
-chrome_options.add_experimental_option("prefs", prefs)
-chrome_options.add_experimental_option("detach",True)
-driver = webdriver.Chrome(options=chrome_options)
-driver.implicitly_wait(5)
-driver.maximize_window()
+driver = setup_selenium_driver(files_directory)
 
 categories = [
+    # (category_name, dataset_link, file_position, file_format, destination, load_func)
     ('View Further mobility data','slnid-line', 0, 'zip','weekly/line_files', load_raw_line_data),
     ('View Service Points Master Data','bfr-rollstuhl', 1,'csv','weekly/bfr_files',load_raw_accessibility_1),
     ('View Service Points Master Data','prm-toilet-full', 0, 'zip','weekly/full_toilet_files', load_raw_toilets),
@@ -68,6 +53,8 @@ for category_name, dataset_link, file_position, file_format, destination, load_f
     logging.info(f"Successfully downloaded file {filename}")
     time.sleep(10)
     driver.execute_script("window.history.go(-1)")
+
+    # File format handling
     if file_format == 'zip':
         zip_file = f'{files_directory}/{filename}'
         extract_to = files_directory
@@ -76,21 +63,31 @@ for category_name, dataset_link, file_position, file_format, destination, load_f
         filename = filename.replace('.zip','')
     elif file_format == 'xlsx':
         df = pd.read_excel(f'{files_directory}/{filename}')
-        df.drop(index=range(1,4), inplace=True)
-        filename = 'BAV_List_current_timetable.csv'
+        if filename == 'BAV_List_current_timetable.xlsx':
+            df.drop(index=range(1,4), inplace=True)
+        filename = filename.replace('xlsx', 'csv')
         df.to_csv(filename, index=False)
     else:
         filename = filename.replace(' ','')
+
     # ingest the downloaded file to snowflake internal stage
     file_path = os.path.join(files_directory, filename)
     if os.path.exists(file_path):
         try:
             snowsql_ingest(files_directory, filename, destination)
             logging.info(f'Successfully uploaded {filename} to my_stg/{destination}')
-            load_func()
         except Exception as e:
             logging.error(f'Error occured during uploading {filename} to internal stage.', e)
-# yet to add removal of the files from download folder as next step
+
+    # copy into table from internal stage
+    try:
+        load_func(sf_session)
+        logging.info(f'Successfully copied data from {destination} to raw table')
+    except Exception as e:
+        logging.error(f'Error occured during copying data from {destination} to raw table:', e)
+
+    # remove file from download folder
+    remove_file(file_path)
 
 conn.close()
 time.sleep(5)

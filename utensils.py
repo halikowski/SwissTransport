@@ -1,12 +1,57 @@
 import time
+from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import subprocess
 from snowflake.snowpark import Session
+import os
+import logging
+from dotenv import load_dotenv
 
 
+load_dotenv()
+connection_parameters = {
+    "account": os.getenv('SNOWFLAKE_ACCOUNT'),
+    "user": os.getenv('SNOWFLAKE_USER'),
+    "password": os.getenv('SNOWFLAKE_PASSWORD'),
+    "role": os.getenv('SNOWFLAKE_ROLE'),
+    "database": os.getenv('SNOWFLAKE_DATABASE'),
+    "schema": os.getenv('SNOWFLAKE_SCHEMA'),
+    "warehouse": os.getenv('SNOWFLAKE_WAREHOUSE'),
+    'login': 'true'
+}
+
+def remove_file(path: str):
+    """
+    Function for deleting the file from specified file_path.
+    Used once the file is successfully uploaded to desired location
+    """
+    try:
+        os.remove(path)
+        print(f"File '{path}' successfully deleted.")
+    except FileNotFoundError:
+        print(f"File '{path}' not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+
+def setup_selenium_driver(dl_directory: str):
+    """
+    Function for quick Selenium driver setup, with specified file download directory.
+    Returns driver object for further operations.
+    """
+    chrome_options = webdriver.ChromeOptions()
+    prefs = {"download.default_directory": dl_directory}
+    chrome_options.add_experimental_option("prefs", prefs)
+    chrome_options.add_experimental_option("detach", True)
+    driver = webdriver.Chrome(options=chrome_options)
+    driver.implicitly_wait(5)
+    driver.maximize_window()
+    logging.info(f'Selenium driver successfully configured with download directory: {dl_directory}')
+    return driver
 
 def navigate_to_category(driver,category_title):
     """Goes to the transport category selection page"""
@@ -89,3 +134,14 @@ def get_snowpark_session() -> Session:
     }
     # creating snowflake session object
     return Session.builder.configs(connection_parameters).create()
+
+def send_to_snowflake(file_path: str, stage_folder: str):
+    """
+    Function for sending to snowflake
+    """
+    if os.path.exists(file_path):
+        try:
+            snowsql_ingest(files_directory, filename, stage_folder)
+            logging.info(f'Successfully uploaded {filename} to my_stg/daily')
+        except Exception as e:
+            logging.error(f'Error occured during uploading {filename} to internal stage.', e)
