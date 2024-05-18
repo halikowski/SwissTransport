@@ -1,0 +1,118 @@
+{
+    "daily": {
+        "files_directory": "C:/Users/Mateusz/Downloads/transport/daily",
+        "categories": [
+            {
+                "name": "View Actual data",
+                "dataset_link": "istdaten",
+                "file_position": 0,
+                "file_format": "csv",
+                "destination": "daily",
+                "load_function": "load_raw_transport"
+            }
+        ]
+    },
+    "weekly": {
+        "files_directory": "C:/Users/Mateusz/Downloads/transport/weekly",
+        "categories": [
+            {
+                "name": "View Further mobility data",
+                "dataset_link": "slnid-line",
+                "file_position": 0,
+                "file_format": "zip",
+                "destination": "weekly/line_files",
+                "load_function": "load_raw_line_data"
+            },
+            {
+                "name": "View Service Points Master Data",
+                "dataset_link": "bfr-rollstuhl",
+                "file_position": 1,
+                "file_format": "csv",
+                "destination": "weekly/bfr_files",
+                "load_function": "load_raw_accessibility_1"
+            },
+            {
+                "name": "View Service Points Master Data",
+                "dataset_link": "prm-toilet-full",
+                "file_position": 0,
+                "file_format": "zip",
+                "destination": "weekly/full_toilet_files",
+                "load_function": "load_raw_toilets"
+            },
+            {
+                "name": "View Service Points Master Data",
+                "dataset_link": "prm-platform-actual-date",
+                "file_position": 0,
+                "file_format": "zip",
+                "destination": "weekly/platform_files",
+                "load_function": "load_raw_accessibility_2"
+            },
+            {
+                "name": "View Service Points Master Data",
+                "dataset_link": "bav_liste",
+                "file_position": 1,
+                "file_format": "xlsx",
+                "destination": "weekly/bav_files",
+                "load_function": "load_raw_stop_data"
+            },
+            {
+                "name": "View Business organisations",
+                "dataset_link": "business-organisations",
+                "file_position": 0,
+                "file_format": "zip",
+                "destination": "weekly/org_files",
+                "load_function": "load_raw_operators"
+            }
+        ]
+    },
+    "monthly": {
+        "files_directory": "C:/Users/Mateusz/Downloads/transport/monthly",
+        "categories": [
+            {
+                "name": "View Further mobility data",
+                "dataset_link": "bike-parking",
+                "file_position": 0,
+                "file_format": "json",
+                "destination": "monthly/bike_files",
+                "load_function": "load_raw_bike_parking_data"
+            },
+            {
+              "name": "View Further mobility data",
+              "dataset_link": "vm-liste",
+              "file_position": 0,
+              "file_format": "csv",
+              "destination": "monthly/tsub_files",
+              "load_function": "load_raw_transport_subtypes"
+            },
+            {
+              "name": "View Further mobility data",
+              "dataset_link": "parking-facilities",
+              "file_position": 0,
+              "file_format": "json",
+              "destination": "monthly/parking_files",
+              "load_function": "load_raw_parking_data"
+            },
+            {
+              "name": "View Further mobility data",
+              "dataset_link": "vm-liste",
+              "file_position": 1,
+              "file_format": "csv",
+              "destination": "monthly/tmode_files",
+              "load_function": "load_raw_transport_types"
+            }
+        ]
+    },
+    "yearly": {
+        "files_directory": "C:/Users/Mateusz/Downloads/transport/yearly",
+        "categories": [
+            {
+                "name": "View Further mobility data",
+                "dataset_link": "einundaus",
+                "file_position": 0,
+                "file_format": "xlsx",
+                "destination": "yearly/occupancy_files",
+                "load_function": "load_raw_occupancy_data"
+            }
+        ]
+    }
+}
