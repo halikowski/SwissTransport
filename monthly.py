@@ -28,8 +28,8 @@ driver = setup_selenium_driver(files_directory)
 categories = [
     ('View Further mobility data','bike-parking', 0, 'json', 'monthly/bike_files', load_raw_bike_parking_data),
     ('View Further mobility data','vm-liste', 0, 'csv', 'monthly/tsub_files', load_raw_transport_subtypes),
-    ('View Further mobility data','parking-facilities', 0, 'json', 'parking_files',load_raw_parking_data),
-    ('View Further mobility data','vm-liste', 1,'tmode_files','csv', load_raw_transport_types)
+    ('View Further mobility data','parking-facilities', 0, 'json', 'monthly/parking_files',load_raw_parking_data),
+    ('View Further mobility data','vm-liste', 1,'csv','monthly/tmode_files', load_raw_transport_types)
 ]
 
 for category_name, dataset_link, file_position, file_format, destination, load_func in categories:

@@ -123,25 +123,5 @@ def snowsql_ingest(directory, filename, stg_folder):
                     f"PUT file://{directory}/{filename} @my_stg/{stg_folder} auto_compress=true"])
 
 def get_snowpark_session() -> Session:
-    connection_parameters = {
-       "ACCOUNT":"iigqpyy-qq30975",
-        "USER":"user_01",
-        "PASSWORD":"Snowp4rk",
-        "ROLE":"SYSADMIN",
-        "DATABASE":"SWISS_TRANSPORT",
-        "SCHEMA":"RAW",
-        "WAREHOUSE":"TRANSPORT_WH"
-    }
     # creating snowflake session object
     return Session.builder.configs(connection_parameters).create()
-
-def send_to_snowflake(file_path: str, stage_folder: str):
-    """
-    Function for sending to snowflake
-    """
-    if os.path.exists(file_path):
-        try:
-            snowsql_ingest(files_directory, filename, stage_folder)
-            logging.info(f'Successfully uploaded {filename} to my_stg/daily')
-        except Exception as e:
-            logging.error(f'Error occured during uploading {filename} to internal stage.', e)
