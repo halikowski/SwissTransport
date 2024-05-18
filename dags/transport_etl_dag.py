@@ -4,19 +4,19 @@ from airflow.sensors.filesystem import FileSensor
 from datetime import datetime, timedelta
 import json
 import os
-from utensils import get_snowpark_session
+from scripts.utensils import get_snowpark_session
 
 # Import the combined task functions
 from transport_etl_tasks import (
     download_and_process_file, ingest_file_to_snowflake, load_data_to_table, cleanup_file
 )
-from curated import (
+from scripts.curated import (
     update_curated_transport, update_curated_accessibility, update_curated_vehicles,
     update_curated_transport_types, update_curated_line_data, update_curated_business,
     update_curated_operators, update_curated_stop_municipality, update_curated_occupancy,
     update_curated_parkings
 )
-from consumption import (
+from scripts.consumption import (
     update_transport_fact, update_transport_types_dim, update_operators_dim, update_parking_dim,
     update_vehicles_dim, update_lines_dim, update_stops_dim, update_accessibilty_dim, update_occupancy_dim,
     update_municipality_dim, update_business_types_dim

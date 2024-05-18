@@ -2,16 +2,15 @@ import os
 import time
 import logging
 import zipfile
-import json
 import pandas as pd
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
 
-from utensils import (
+from scripts.utensils import (
     navigate_to_category, download_file, get_downloaded_filename, snowsql_ingest,
-    setup_selenium_driver, connection_parameters, get_snowpark_session, remove_file
+    setup_selenium_driver
 )
 
 
