@@ -1,6 +1,6 @@
 {
     "daily": {
-        "files_directory": "C:/Users/Mateusz/Downloads/transport/daily",
+        "files_directory": "/opt/airflow/transport/daily",
         "categories": [
             {
                 "name": "View Actual data",
@@ -13,7 +13,7 @@
         ]
     },
     "weekly": {
-        "files_directory": "C:/Users/Mateusz/Downloads/transport/weekly",
+        "files_directory": "/opt/airflow/transport/weekly",
         "categories": [
             {
                 "name": "View Further mobility data",
@@ -66,7 +66,7 @@
         ]
     },
     "monthly": {
-        "files_directory": "C:/Users/Mateusz/Downloads/transport/monthly",
+        "files_directory": "/opt/airflow/transport/monthly",
         "categories": [
             {
                 "name": "View Further mobility data",
@@ -103,7 +103,7 @@
         ]
     },
     "yearly": {
-        "files_directory": "C:/Users/Mateusz/Downloads/transport/yearly",
+        "files_directory": "/opt/airflow/transport/yearly",
         "categories": [
             {
                 "name": "View Further mobility data",
