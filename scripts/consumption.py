@@ -1,5 +1,4 @@
 from snowflake.snowpark.functions import col
-from googletrans import Translator
 import sys
 import logging
 
@@ -63,11 +62,6 @@ def update_accessibilty_dim(session):
 
 
 def update_business_types_dim(session):
-# # business_types_dim
-# #     @udf(packages=['googletrans'])
-# #     def translate_de_to_en(text: str) -> str:
-# #         translator = Translator()
-# #         return translator.translate(text, src_lang="de", dest_lang="en").text
 
     curated_btypes_df = session.table('curated.curated_business_types')
     btypes_dim_df = curated_btypes_df.na.drop(subset=['business_type_id'])

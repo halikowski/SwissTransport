@@ -4,6 +4,11 @@ from airflow.sensors.filesystem import FileSensor
 from datetime import datetime, timedelta
 import json
 import os
+import sys
+
+sys.path.append('/opt/airflow')
+sys.path.append('/opt/airflow/scripts')
+
 from scripts.utensils import get_snowpark_session
 
 # Import the combined task functions
@@ -43,23 +48,23 @@ dag = DAG(
 
 sf_session = get_snowpark_session()
 
-with open('/path/to/config.json', 'r') as f:
+with open('/opt/airflow/config/config.json', 'r') as f:
     config = json.load(f)
 
 raw_tasks = []
 
 for frequency, categories in config.items():
     files_directory = categories['files_directory']
-    for category in categories:
-        category_name = category['category_name']
+    for category in categories['categories']:
+        category_name = category['name']
         dataset_link = category['dataset_link']
         file_position = category['file_position']
         file_format = category['file_format']
         destination = category['destination']
-        load_func = category['load_func']
+        load_func = category['load_function']
 
         download_file_task = PythonOperator(
-            task_id=f'download_{category_name}_{frequency}',
+            task_id=f'download_{load_func}_{frequency}',
             python_callable=download_and_process_file,
             op_kwargs={
                 'category_name': category_name,
@@ -72,7 +77,7 @@ for frequency, categories in config.items():
         )
 
         file_sensor_task = FileSensor(
-            task_id=f'wait_for_{category_name}_{frequency}',
+            task_id=f'wait_for_{load_func}_{frequency}',
             filepath=os.path.join(files_directory,
                                   f'{{{{ task_instance.xcom_pull(task_ids="{download_file_task.task_id}") }}}}'),
             poke_interval=30,
@@ -81,7 +86,7 @@ for frequency, categories in config.items():
             )
 
         ingest_file_task = PythonOperator(
-            task_id=f'ingest_{category_name}_{frequency}',
+            task_id=f'ingest_{load_func}_{frequency}',
             python_callable=ingest_file_to_snowflake,
             op_kwargs={
                 'filename': "{{ task_instance.xcom_pull(task_ids='" + download_file_task.task_id + "') }}",
@@ -92,7 +97,7 @@ for frequency, categories in config.items():
         )
 
         load_data_task = PythonOperator(
-            task_id=f'load_{category_name}_{frequency}',
+            task_id=f'load_{load_func}_{frequency}',
             python_callable=load_data_to_table,
             op_kwargs={
                 'sf_session': sf_session,
@@ -103,7 +108,7 @@ for frequency, categories in config.items():
         )
 
         cleanup_task = PythonOperator(
-            task_id=f'cleanup_{category_name}_{frequency}',
+            task_id=f'cleanup_{load_func}_{frequency}',
             python_callable=cleanup_file,
             op_kwargs={
                 'file_path': os.path.join(files_directory,
@@ -128,7 +133,7 @@ curated_tasks = []
 for func in curated_functions:
     curated_tasks.append(
         PythonOperator(
-            task_id=f'{func}',
+            task_id=f'{func.__name__}',
             python_callable=func,
             op_kwargs={'session': sf_session},
             dag=dag,
@@ -147,7 +152,7 @@ consumption_tasks = []
 for func in consumption_functions:
     consumption_tasks.append(
         PythonOperator(
-            task_id=f'{func}',
+            task_id=f'{func.__name__}',
             python_callable=func,
             op_kwargs={'session': sf_session},
             dag=dag,

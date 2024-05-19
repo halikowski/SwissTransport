@@ -11,7 +11,7 @@ import logging
 from dotenv import load_dotenv
 
 
-load_dotenv()
+load_dotenv('/opt/airflow/.env')
 connection_parameters = {
     "account": os.getenv('SNOWFLAKE_ACCOUNT'),
     "user": os.getenv('SNOWFLAKE_USER'),
