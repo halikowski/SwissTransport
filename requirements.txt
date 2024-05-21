@@ -7,3 +7,4 @@ snowflake-snowpark-python
 psycopg2-binary
 python-dotenv
 webdriver-manager
+openpyxl
