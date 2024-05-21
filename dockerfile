@@ -71,6 +71,8 @@ COPY config/ $AIRFLOW_HOME/config/
 COPY scripts/ $AIRFLOW_HOME/scripts/
 COPY docker-entrypoint.sh /entrypoint.sh
 COPY requirements.txt .
+# Copy .env file to the container
+COPY .env /opt/airflow/.env
 
 
 # Ensure entrypoint script is executable

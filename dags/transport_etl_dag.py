@@ -5,16 +5,26 @@ from datetime import datetime, timedelta
 import json
 import os
 import sys
+from snowflake.snowpark import Session
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
 sys.path.append('/opt/airflow')
 sys.path.append('/opt/airflow/scripts')
 
-from scripts.utensils import get_snowpark_session
+# from scripts.utensils import get_snowpark_session
 
 # Import the combined task functions
 from transport_etl_tasks import (
     download_and_process_file, ingest_file_to_snowflake, load_data_to_table, cleanup_file
 )
+
+from scripts.raw import (
+    load_raw_transport, load_raw_line_data, load_raw_accessibility_1,
+    load_raw_accessibility_2, load_raw_stop_data, load_raw_operators,
+    load_raw_bike_parking_data, load_raw_transport_subtypes, load_raw_parking_data,
+    load_raw_transport_types, load_raw_occupancy_data
+)
+
 from scripts.curated import (
     update_curated_transport, update_curated_accessibility, update_curated_vehicles,
     update_curated_transport_types, update_curated_line_data, update_curated_business,
@@ -46,7 +56,23 @@ dag = DAG(
     catchup=False,
 )
 
-sf_session = get_snowpark_session()
+hook = SnowflakeHook('snowflake_default')
+conn = hook.get_conn()
+sf_session = Session.builder.config("connection", conn).create()
+
+function_mapping = {
+    "load_raw_transport": load_raw_transport,
+    "load_raw_line_data": load_raw_line_data,
+    "load_raw_accessibility_1": load_raw_accessibility_1,
+    "load_raw_accessibility_2": load_raw_accessibility_2,
+    "load_raw_stop_data": load_raw_stop_data,
+    "load_raw_operators": load_raw_operators,
+    "load_raw_bike_parking_data": load_raw_bike_parking_data,
+    "load_raw_transport_subtypes": load_raw_transport_subtypes,
+    "load_raw_parking_data": load_raw_parking_data,
+    "load_raw_transport_types": load_raw_transport_types,
+    "load_raw_occupancy_data": load_raw_occupancy_data
+}
 
 with open('/opt/airflow/config/config.json', 'r') as f:
     config = json.load(f)
@@ -61,10 +87,11 @@ for frequency, categories in config.items():
         file_position = category['file_position']
         file_format = category['file_format']
         destination = category['destination']
-        load_func = category['load_function']
+        load_func_name = category['load_function']
+        load_func = function_mapping.get(load_func_name)
 
         download_file_task = PythonOperator(
-            task_id=f'download_{load_func}_{frequency}',
+            task_id=f'download_{load_func_name}_{frequency}',
             python_callable=download_and_process_file,
             op_kwargs={
                 'category_name': category_name,
@@ -77,7 +104,7 @@ for frequency, categories in config.items():
         )
 
         file_sensor_task = FileSensor(
-            task_id=f'wait_for_{load_func}_{frequency}',
+            task_id=f'wait_for_{load_func_name}_{frequency}',
             filepath=os.path.join(files_directory,
                                   f'{{{{ task_instance.xcom_pull(task_ids="{download_file_task.task_id}") }}}}'),
             poke_interval=30,
@@ -86,7 +113,7 @@ for frequency, categories in config.items():
             )
 
         ingest_file_task = PythonOperator(
-            task_id=f'ingest_{load_func}_{frequency}',
+            task_id=f'ingest_{load_func_name}_{frequency}',
             python_callable=ingest_file_to_snowflake,
             op_kwargs={
                 'filename': "{{ task_instance.xcom_pull(task_ids='" + download_file_task.task_id + "') }}",
@@ -97,7 +124,7 @@ for frequency, categories in config.items():
         )
 
         load_data_task = PythonOperator(
-            task_id=f'load_{load_func}_{frequency}',
+            task_id=f'load_{load_func_name}_{frequency}',
             python_callable=load_data_to_table,
             op_kwargs={
                 'sf_session': sf_session,
@@ -108,7 +135,7 @@ for frequency, categories in config.items():
         )
 
         cleanup_task = PythonOperator(
-            task_id=f'cleanup_{load_func}_{frequency}',
+            task_id=f'cleanup_{load_func_name}_{frequency}',
             python_callable=cleanup_file,
             op_kwargs={
                 'file_path': os.path.join(files_directory,

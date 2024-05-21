@@ -12,7 +12,9 @@ import os
 import logging
 import glob
 from dotenv import load_dotenv
+import sys
 
+sys.path.append('/opt/airflow')
 
 load_dotenv('/opt/airflow/.env')
 connection_parameters = {
