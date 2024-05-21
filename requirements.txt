@@ -5,3 +5,4 @@ snowflake-connector-python
 snowflake-snowpark-python
 psycopg2-binary
 python-dotenv
+webdriver-manager

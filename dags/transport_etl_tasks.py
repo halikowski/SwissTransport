@@ -31,7 +31,7 @@ def download_and_process_file(category_name, dataset_link, file_position, file_f
         dataset_element.click()
 
     download_file(driver, file_position)
-    filename = get_downloaded_filename(driver)
+    filename = get_downloaded_filename(files_directory)
     logging.info(f"Successfully downloaded file {filename}")
     time.sleep(10)
     driver.execute_script("window.history.go(-1)")

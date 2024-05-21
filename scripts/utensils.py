@@ -1,5 +1,7 @@
 import time
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -8,6 +10,7 @@ import subprocess
 from snowflake.snowpark import Session
 import os
 import logging
+import glob
 from dotenv import load_dotenv
 
 
@@ -44,10 +47,14 @@ def setup_selenium_driver(dl_directory: str):
     Returns driver object for further operations.
     """
     chrome_options = webdriver.ChromeOptions()
-    prefs = {"download.default_directory": dl_directory}
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument("--no-sandbox")  # Bypass OS security model
+    chrome_options.add_argument("--disable-dev-shm-usage")  # Overcome limited resource problems
+    prefs = {"download.default_directory": dl_directory,
+             "download.prompt_for_download": False,}
     chrome_options.add_experimental_option("prefs", prefs)
     chrome_options.add_experimental_option("detach", True)
-    driver = webdriver.Chrome(options=chrome_options)
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
     driver.implicitly_wait(5)
     driver.maximize_window()
     logging.info(f'Selenium driver successfully configured with download directory: {dl_directory}')
@@ -85,35 +92,23 @@ def download_file(driver,n):
         print('An error occured while downloading files:', e)
 
 
-def get_downloaded_filename(driver):
+def get_downloaded_filename(download_dir):
     """Gets name of the downloaded file by opening Chrome downloads window and reading last downloaded file name"""
-    def chrome_downloads(drv):
-        """Function to wait for all current chrome downloads to finish"""
-        if not "chrome://downloads" in drv.current_url:  # if 'chrome downloads' is not current tab
-            drv.execute_script("window.open('');")  # open a new tab
-            drv.switch_to.window(driver.window_handles[1])  # switch to the new tab
-            drv.get("chrome://downloads/")  # navigate to chrome downloads
-        return drv.execute_script("""
-                    return document.querySelector('downloads-manager')
-                    .shadowRoot.querySelector('#downloadsList')
-                    .items.filter(e => e.state === 'COMPLETE')
-                    .map(e => e.filePath || e.file_path || e.fileUrl || e.file_url);
-                    """)
-    # wait for all the downloads to be completed
-    WebDriverWait(driver, 1200, 1).until(chrome_downloads)  # returns list of downloaded file paths
-    # get latest downloaded file name and path
+    start_time = time.time()
     time.sleep(10)
-    dl_filename = driver.execute_script("""
-                return document.querySelector('downloads-manager')
-                .shadowRoot.querySelector('#downloadsList downloads-item')
-                .shadowRoot.querySelector('div#content  #file-link').text""")  # latest downloaded file from the list
-    time.sleep(5)
-    # Close the current tab (chrome downloads)
-    if "chrome://downloads" in driver.current_url:
-        driver.close()
-    # Switch back to original tab
-    driver.switch_to.window(driver.window_handles[0])
-    return dl_filename
+    while True:
+        list_of_files = glob.glob(os.path.join(download_dir, '*'))
+        if not list_of_files:
+            continue
+
+        latest_file = max(list_of_files, key=os.path.getctime)
+        if not latest_file.endswith('.crdownload'):
+            return os.path.basename(latest_file)
+
+        if time.time() - start_time > 1200:
+            raise TimeoutError("Timed out waiting for the download to complete.")
+
+        time.sleep(10)
 
 
 def snowsql_ingest(directory, filename, stg_folder):
