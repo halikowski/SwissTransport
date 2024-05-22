@@ -7,15 +7,16 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import subprocess
-from snowflake.snowpark import Session
 import os
 import logging
 import glob
 from dotenv import load_dotenv
 import sys
 
+# Added file paths for unpredicted path errors which have once happened when trying to access 'scripts' folder
 sys.path.append('/opt/airflow')
 
+# Get Snowflake account credentials
 load_dotenv('/opt/airflow/.env')
 connection_parameters = {
     "account": os.getenv('SNOWFLAKE_ACCOUNT'),
@@ -28,60 +29,56 @@ connection_parameters = {
     'login': 'true'
 }
 
-def remove_file(path: str):
-    """
-    Function for deleting the file from specified file_path.
-    Used once the file is successfully uploaded to desired location
-    """
-    try:
-        os.remove(path)
-        print(f"File '{path}' successfully deleted.")
-    except FileNotFoundError:
-        print(f"File '{path}' not found.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
 
-
-
-def setup_selenium_driver(dl_directory: str):
+def setup_selenium_driver(dl_directory: str) -> webdriver.Chrome:
     """
-    Function for quick Selenium driver setup, with specified file download directory.
+    Function for quick Selenium driver setup, with specified custom file download directory.
     Returns driver object for further operations.
     """
     chrome_options = webdriver.ChromeOptions()
+    # Run chrome in headless mode, because this code is prepared to be used on Docker Container.
     chrome_options.add_argument('--headless')
     chrome_options.add_argument("--no-sandbox")  # Bypass OS security model
     chrome_options.add_argument("--disable-dev-shm-usage")  # Overcome limited resource problems
+    # Custom download directory setup
     prefs = {"download.default_directory": dl_directory,
              "download.prompt_for_download": False,}
     chrome_options.add_experimental_option("prefs", prefs)
     chrome_options.add_experimental_option("detach", True)
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
     driver.implicitly_wait(5)
-    driver.maximize_window()
     logging.info(f'Selenium driver successfully configured with download directory: {dl_directory}')
+
     return driver
 
-def navigate_to_category(driver,category_title):
-    """Goes to the transport category selection page"""
+
+def navigate_to_category(driver: webdriver.Chrome, category_title: str) -> None:
+    """
+    Navigates directly to the data supplier's website, specifically 'Data' page.
+    """
     driver.get("https://opentransportdata.swiss/en/group")
     time.sleep(5)
+    # Troubleshoot optional Cookies
     try:
         cookies = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, '#onetrust-accept-btn-handler')))
         cookies.click()
     except:
         pass
+
     time.sleep(2)
+    # Go to the specified category page for file searching
     category_link = WebDriverWait(driver, 20).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, f'a[title="{category_title}"]')))
     category_link.click()
 
 
-def download_file(driver,n):
-    """ Downloads the desired file by clicking on the 'Explore' button and 'Download' button afterwards.
-        The n argument specifies the position of the buttons, since some categories have multiple files available
-        for download. n=0 -> first file on the list, n=1 -> second file, etc."""
+def download_file(driver: webdriver.Chrome, n: int) -> None:
+    """
+    Downloads the desired file by clicking on the 'Explore' button and 'Download' button afterwards.
+    The n argument specifies the position of the buttons, since some categories have multiple files available
+    for download. n=0 -> first file on the list, n=1 -> second file, etc.
+    """
 
     try:
         explore = WebDriverWait(driver, 20).until(
@@ -94,8 +91,10 @@ def download_file(driver,n):
         print('An error occured while downloading files:', e)
 
 
-def get_downloaded_filename(download_dir):
-    """Gets name of the downloaded file by opening Chrome downloads window and reading last downloaded file name"""
+def get_downloaded_filename(download_dir: str) -> str:
+    """
+    Gets name of the downloaded file by navigating to the download directory and reading last downloaded file name
+    """
     start_time = time.time()
     time.sleep(10)
     while True:
@@ -104,21 +103,20 @@ def get_downloaded_filename(download_dir):
             continue
 
         latest_file = max(list_of_files, key=os.path.getctime)
+        # In case no file is being currently downloaded, get latest file name
         if not latest_file.endswith('.crdownload'):
             return os.path.basename(latest_file)
-
+        # Terminate after 20 min
         if time.time() - start_time > 1200:
             raise TimeoutError("Timed out waiting for the download to complete.")
 
         time.sleep(10)
 
 
-def snowsql_ingest(directory, filename, stg_folder):
-    """ Runs SnowSQL commands for file ingestion into Snowflake's internal stage.
-        Each file has it's own dedicated folder. """
+def snowsql_ingest(directory: str, filename: str, stg_folder: str) -> None:
+    """
+    Runs SnowSQL commands for file ingestion into Snowflake's internal stage.
+    Each file has its own dedicated folder. File compression is applied.
+    """
     subprocess.run(['snowsql', '-q',
                     f"PUT file://{directory}/{filename} @my_stg/{stg_folder} auto_compress=true"])
-
-def get_snowpark_session() -> Session:
-    # creating snowflake session object
-    return Session.builder.configs(connection_parameters).create()

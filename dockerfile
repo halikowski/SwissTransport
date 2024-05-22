@@ -1,3 +1,4 @@
+# Install python 3.11 (max.), because Snowpark requires python version < 3.12
 FROM python:3.11
 
 # Install dependencies
@@ -37,7 +38,7 @@ RUN apt-get update
 # Install Google Chrome
 RUN apt-get install -y google-chrome-stable
 
-# Download and install SnowSQL using the curl method
+# Download and install SnowSQL
 RUN curl -o snowsql-1.2.32-linux_x86_64.bash https://sfc-repo.azure.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.32-linux_x86_64.bash \
     && chmod +x snowsql-1.2.32-linux_x86_64.bash \
     && SNOWSQL_DEST=/usr/local/bin SNOWSQL_LOGIN_SHELL=/etc/profile bash snowsql-1.2.32-linux_x86_64.bash \
@@ -46,10 +47,9 @@ RUN curl -o snowsql-1.2.32-linux_x86_64.bash https://sfc-repo.azure.snowflakecom
 # Ensure SnowSQL is properly installed
 RUN snowsql -v
 
-# Environment variables
+# Environment variables setup
 ENV AIRFLOW_HOME=/opt/airflow
 ENV PYTHONPATH=${PYTHONPATH}:/opt/airflow/scripts
-
 
 # Install Apache Airflow
 RUN pip install apache-airflow
@@ -71,14 +71,12 @@ COPY config/ $AIRFLOW_HOME/config/
 COPY scripts/ $AIRFLOW_HOME/scripts/
 COPY docker-entrypoint.sh /entrypoint.sh
 COPY requirements.txt .
-# Copy .env file to the container
 COPY .env /opt/airflow/.env
-
 
 # Ensure entrypoint script is executable
 RUN chmod +x /entrypoint.sh
 
-# Install additional Python dependencies
+# Install additional Python dependencies from requirements file
 RUN pip install -r requirements.txt
 
 # Set entrypoint and default command

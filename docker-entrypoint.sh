@@ -8,7 +8,7 @@ set -o allexport
 source $AIRFLOW_HOME/.env
 set -o allexport
 
-# Create the SnowSQL config file
+# Create the SnowSQL config file, set account credentials
 mkdir -p ~/.snowsql
 cat <<EOF > ~/.snowsql/config
 [connections]

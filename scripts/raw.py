@@ -8,14 +8,17 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%I:%M:%S')
 
 
-def load_raw_transport(session):
+def load_raw_transport(session: Session) -> None:
+    """
+    Loads data from internal stage file to table raw_transport.
+    """
     # Truncating table raw_transport
     try:
         session.sql('truncate table raw_transport').collect()
-        logging.info('raw_transport successfully truncated')
+        logging.info('raw_transport table successfully truncated')
     except Exception as e:
-        logging.error('Error while truncating raw_transport:', e)
-    # loading data from internal stage to raw_transport table
+        logging.error('Error while truncating table raw_transport:', e)
+    # Load data
     try:
         session.sql("""
                 copy into raw_transport from(
@@ -54,10 +57,18 @@ def load_raw_transport(session):
         logging.error('Error occured during copying data into raw_transport table')
 
 
-def load_raw_line_data(session):
-    # truncating table raw_line_data
-    session.sql('truncate table raw_line_data').collect()
-    # loading data from internal stage to table raw_line_data
+def load_raw_line_data(session: Session) -> None:
+    """
+    Loads data from file at internal stage to raw_line_data table.
+    """
+    # Truncating table raw_line_data
+    try:
+        session.sql('truncate table raw_line_data').collect()
+        logging.info('raw_line_data table successfully truncated')
+    except Exception as e:
+        logging.error('Error while truncating table raw_line_data:', e)
+
+    # Loading data
     try:
         session.sql("""
             copy into raw_line_data from (
@@ -84,10 +95,18 @@ def load_raw_line_data(session):
         logging.error('Error occured during copying data into raw_line_data table')
 
 
-def load_raw_operators(session):
-    # truncating table raw_operators
-    session.sql('truncate table raw_operators').collect()
-    # loading data from internal stage to raw_operators table
+def load_raw_operators(session: Session) -> None:
+    """
+    Loads data from internal stage file to table raw_operators.
+    """
+    # Truncating table raw_operators
+    try:
+        session.sql('truncate table raw_operators').collect()
+        logging.info('raw_operators table successfully truncated')
+    except Exception as e:
+        logging.error('Error while truncating table raw_operators:', e)
+
+    # Loading data
     try:
         session.sql("""
                copy into raw_operators from (
@@ -119,10 +138,18 @@ def load_raw_operators(session):
         logging.error('Error occured during copying data into raw_operators table')
 
 
-def load_raw_stop_data(session):
-    # truncating table raw_stop_data
-    session.sql('truncate table raw_stop_data').collect()
-    # loading data from internal stage to table raw_stop_data
+def load_raw_stop_data(session: Session) -> None:
+    """
+    Loads data from internal stage file to table raw_stop_data.
+    """
+    # Truncating table raw_stop_data
+    try:
+        session.sql('truncate table raw_stop_data').collect()
+        logging.info('raw_stop_data table successfully truncated')
+    except Exception as e:
+        logging.error('Error while truncating table raw_stop_data:', e)
+
+    # Loading data
     try:
         session.sql("""
                copy into raw_stop_data from (
@@ -154,10 +181,18 @@ def load_raw_stop_data(session):
         logging.error('Error occured during copying data into raw_stop_data table')
 
 
-def load_raw_accessibility_1(session):
-    # truncating table raw_accessibility_1
-    session.sql('truncate table raw_accessibility_1').collect()
-    # loading data from internal stage to table raw_accessibility_1
+def load_raw_accessibility_1(session: Session) -> None:
+    """
+    Loads data from file at internal stage to table raw_accessibility_1
+    """
+    # Truncating table raw_accessibility_1
+    try:
+        session.sql('truncate table raw_accessibility_1').collect()
+        logging.info('raw_accessibility_1 table successfully truncated')
+    except Exception as e:
+        logging.error('Error while truncating table raw_accessibility_1:', e)
+
+    # Loading data
     try:
         session.sql("""
                copy into raw_accessibility_1 from (
@@ -189,10 +224,18 @@ def load_raw_accessibility_1(session):
         logging.error('Error occured during copying data into raw_accessibility_1 table')
 
 
-def load_raw_accessibility_2(session):
-    # truncating table raw_accessibility_2
-    session.sql('truncate table raw_accessibility_2').collect()
-    # loading data from internal stage to table raw_accessibility_2
+def load_raw_accessibility_2(session: Session) -> None:
+    """
+    Loads data from file at internal stage to table raw_accessibility_2
+    """
+    # Truncating table raw_accessibility_2
+    try:
+        session.sql('truncate table raw_accessibility_2').collect()
+        logging.info('raw_accessibility_2 table successfully truncated')
+    except Exception as e:
+        logging.error('Error while truncating table raw_accessibility_2:', e)
+
+    # Loading data
     try:
         session.sql("""
         copy into raw_accessibility_2 from (
@@ -219,10 +262,18 @@ def load_raw_accessibility_2(session):
         logging.error('Error occured during copying data into raw_accessibility_2 table')
 
 
-def load_raw_toilets(session):
-    # truncate table raw_toilets
-    session.sql('truncate table raw_toilets').collect()
-    # loading data from internal stage to table raw_toilets
+def load_raw_toilets(session: Session) -> None:
+    """
+    Loads data from file at internal stage to table raw_toilets
+    """
+    # Truncate table raw_toilets
+    try:
+        session.sql('truncate table raw_toilets').collect()
+        logging.info('raw_toilets table successfully truncated')
+    except Exception as e:
+        logging.error('Error while truncating table raw_toilets:', e)
+
+    # Loading data
     try:
         session.sql("""
         copy into raw_toilets from (
@@ -244,10 +295,18 @@ def load_raw_toilets(session):
         logging.error('Error occured during copying data into raw_toilets table')
 
 
-def load_raw_parking_data(session):
-    # truncating table raw_json_parking_data
-    session.sql('truncate table raw_json_parking_data').collect()
-    # loading data from internal stage to table raw_json_parking_data
+def load_raw_parking_data(session: Session) -> None:
+    """
+    Loads data from files at internal stage to tables raw_json_parking_data & raw_parking_data
+    """
+    # Truncating table raw_json_parking_data
+    try:
+        session.sql('truncate table raw_json_parking_data').collect()
+        logging.info('raw_parking_datatable successfully truncated')
+    except Exception as e:
+        logging.error('Error while truncating table raw_parking_data:', e)
+
+    # Loading data from json file
     try:
         session.sql("""
                COPY INTO raw_json_parking
@@ -260,9 +319,14 @@ def load_raw_parking_data(session):
     except Exception as e:
         logging.error('Error occured during copying data into raw_json_parking table')
 
-    # truncating table raw_parking_data
-    session.sql('truncate table raw_parking_data').collect()
-    # inserting data from raw_json_parking_data to raw_parking_data
+    # Truncating table raw_parking_data
+    try:
+        session.sql('truncate table raw_parking_data').collect()
+        logging.info('raw_parking_data table successfully truncated')
+    except Exception as e:
+        logging.error('Error while truncating table raw_parking_data:', e)
+
+    # Loading data to raw_parking_data table
     try:
         session.sql("""
                 insert into raw_parking_data (
@@ -288,10 +352,18 @@ def load_raw_parking_data(session):
         logging.error('Error occured during copying data into raw_parking_data table')
 
 
-def load_raw_bike_parking_data(session):
-    # truncating table raw_json_bike_parking
-    session.sql('truncate table raw_json_bike_parking').collect()
-    # loading data from internal stage to table raw_json_bike_parking
+def load_raw_bike_parking_data(session: Session) -> None:
+    """
+    Loads data from files at internal stage to tables raw_json_bike_parking & raw_bike_parking_data
+    """
+    # Truncating table raw_json_bike_parking
+    try:
+        session.sql('truncate table raw_json_bike_parking').collect()
+        logging.info('raw_json_bike_parking table successfully truncated')
+    except Exception as e:
+        logging.error('Error while truncating table raw_json_bike_parking:', e)
+
+    # Loading json data
     try:
         session.sql("""
             copy into raw_json_bike_parking
@@ -304,9 +376,14 @@ def load_raw_bike_parking_data(session):
     except Exception as e:
         logging.error('Error occured during copying data into raw_json_bike_parking table')
 
-    # truncating table raw_bike_parking_data
-    session.sql('truncate table raw_bike_parking_data').collect()
-    # inserting data from raw_json_bike_parking to raw_bike_parking_data
+    # Truncating table raw_bike_parking_data
+    try:
+        session.sql('truncate table raw_bike_parking_data').collect()
+        logging.info('raw_bike_parking_data table successfully truncated')
+    except Exception as e:
+        logging.error('Error while truncating table raw_bike_parking_data:', e)
+
+    # Loading data to raw_bike_parking_data
     try:
         session.sql("""
             insert into raw_bike_parking_data (
@@ -321,10 +398,18 @@ def load_raw_bike_parking_data(session):
         logging.error('Error occured during copying data into raw_bike_parking_data table')
 
 
-def load_raw_transport_subtypes(session):
-    # truncating table raw_transport_subtypes
-    session.sql('truncate table raw_transport_subtypes').collect()
-    # loading data from internal stage to table raw_transport_subtypes
+def load_raw_transport_subtypes(session: Session) -> None:
+    """
+    Loads data from file at internal stage to raw_transport_subtypes table
+    """
+    # Truncating table raw_transport_subtypes
+    try:
+        session.sql('truncate table raw_transport_subtypes').collect()
+        logging.info('raw_transport_subtypes table successfully truncated')
+    except Exception as e:
+        logging.error('Error while truncating table raw_transport_subtypes:', e)
+
+    # Loading data
     try:
         session.sql("""
             copy into raw_transport_subtypes from(
@@ -350,10 +435,18 @@ def load_raw_transport_subtypes(session):
         logging.error('Error occured during copying data into raw_transport_subtypes table')
 
 
-def load_raw_transport_types(session):
-    # truncating table raw_transport_types
-    session.sql('truncate table raw_transport_types').collect()
-    # loading data from internal stage to table raw_transport_types
+def load_raw_transport_types(session: Session) -> None:
+    """
+    Loads data from file at internal stage to raw_transport_types table
+    """
+    # Truncating table raw_transport_types
+    try:
+        session.sql('truncate table raw_transport_types').collect()
+        logging.info('raw_transport_types table successfully truncated')
+    except Exception as e:
+        logging.error('Error while truncating table raw_transport_types:', e)
+
+    # Loading data
     try:
         session.sql("""
                copy into raw_transport_types from (
@@ -377,10 +470,18 @@ def load_raw_transport_types(session):
         logging.error('Error occured during copying data into raw_transport_types table')
 
 
-def load_raw_occupancy_data(session):
-    # truncating table raw_occupancy_data
-    session.sql('truncate table raw_occupancy_data').collect()
-    # loading data from internal stage to table raw_occupancy_data
+def load_raw_occupancy_data(session: Session) -> None:
+    """
+    Loads data from file at internal stage to raw_occupancy_data file
+    """
+    # Truncating table raw_occupancy_data
+    try:
+        session.sql('truncate table raw_occupancy_data').collect()
+        logging.info('raw_occupancy_data table successfully truncated')
+    except Exception as e:
+        logging.error('Error while truncating table raw_occupancy_data:', e)
+
+    # Loading data
     try:
         session.sql("""
                copy into raw_occupancy_data from (
@@ -405,22 +506,3 @@ def load_raw_occupancy_data(session):
         logging.info('Successfully copied data into raw_occupancy_data table')
     except Exception as e:
         logging.error('Error occured during copying data into raw_occupancy_data table')
-
-
-
-    # SnowSQL commands for file ingestion:
-
-    # PUT file://C:/Users/Mateusz/Downloads/transport_files/2024-04-12_istdaten.csv @my_stg/daily auto_compress=true;
-    # PUT file://C:/Users/Mateusz/Downloads/transport_files/actual_date_line_versions_2024-04-17.csv @my_stg/weekly/line_files auto_compress=true;
-    # PUT file://C:/Users/Mateusz/Downloads/transport_files/actual_date_business_organisation_versions_2024-04-17.csv @my_stg/weekly/org_files auto_compress=true;
-    # PUT file://C:/Users/Mateusz/Downloads/transport_files/actual-date-stop_point-2024-04-04.csv @my_stg/weekly/stop_files auto_compress=true;
-    # PUT file://C:/Users/Mateusz/Downloads/transport_files/actual-date-platform-2024-04-19.csv @my_stg/weekly/platform_files auto_compress=true;
-    # PUT file://C:/Users/Mateusz/Downloads/transport_files/actual-date-toilet-2024-04-04.csv @my_stg/weekly/toilet_files auto_compress=true;
-    # PUT file://C:/Users/Mateusz/Downloads/transport_files/bav_list_current_timetable.csv @my_stg/weekly/bav_files auto_compress=true;
-    # PUT file://C:/Users/Mateusz/Downloads/transport_files/full-toilet-2024-04-04.csv @my_stg/weekly/full_toilet_files auto_compress=true;
-    # PUT file://C:/Users/Mateusz/Downloads/transport_files/bfr_haltestellendaten.csv @my_stg/weekly/bfr_files auto_compress=true;
-    # PUT file://C:/Users/Mateusz/Downloads/transport_files/transportmodes280923.csv @my_stg/monthly/tmode_files auto_compress=true;
-    # PUT file://C:/Users/Mateusz/Downloads/transport_files/transportsubmodes.csv @my_stg/monthly/tsub_files auto_compress=true;
-    # PUT file://C:/Users/Mateusz/Downloads/transport_files/bike_parking.json @my_stg/monthly/bike_files auto_compress=true;
-    # PUT file://C:/Users/Mateusz/Downloads/transport_files/parking-facilities.json @my_stg/monthly/parking_files auto_compress=true;
-    # PUT file://C:/Users/Mateusz/Downloads/transport_files/t01x_sbb-cff-ffs_frequentia_2022.csv @my_stg/yearly/occupancy_files auto_compress=true;
