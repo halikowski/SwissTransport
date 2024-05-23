@@ -45,6 +45,7 @@ def download_and_process_file(category_name: str,
 
     # Once element is located, download the file
     download_file(driver, file_position)
+    time.sleep(10)
     # Get the file name
     filename = get_downloaded_filename(files_directory)
     logging.info(f"Successfully downloaded file {filename}")
@@ -61,14 +62,23 @@ def download_and_process_file(category_name: str,
         with zipfile.ZipFile(zip_file, "r") as zip_ref:
             zip_ref.extractall(files_directory)
         filename = filename.replace('.zip', '')
-    # One of the excel files contains rubbish data and notes at rows 2-4 - these have to be dropped
     elif file_format == 'xlsx':
-        df = pd.read_excel(os.path.join(files_directory, filename))
-        if filename == 'BAV_List_current_timetable.xlsx':
-            df.drop(index=range(1,4), inplace=True)
+        # This file data is placed in 2nd sheet named 'Data'
+        if filename == 'Passengers boarding and alighting.xlsx':
+            df = pd.read_excel(os.path.join(files_directory, filename), sheet_name="Data")
+        # This file requires removing 3 rubbish text rows
+        elif filename == 'BAV_List_current_timetable.xlsx':
+            df = pd.read_excel(os.path.join(files_directory, filename))
+            rows_to_drop = [0,1,2]
+            df.drop(rows_to_drop, inplace=True)
+        # Opening other files without changes
+        else:
+            df = pd.read_excel(os.path.join(files_directory, filename))
+        # Exporting as .csv
         filename = filename.replace('.xlsx', '.csv')
-        df.to_csv(os.path.join(files_directory, filename), index=False)
-    # Remove unnecessary spaces inside the file name
+        filename = filename.replace(' ','_')
+        df.to_csv(os.path.join(files_directory, filename), index=False, sep=';')
+    # Removing unnecessary spaces inside the file name
     else:
         filename = filename.replace(' ', '')
 

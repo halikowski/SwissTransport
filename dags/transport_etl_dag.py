@@ -22,7 +22,7 @@ from scripts.raw import (
     load_raw_transport, load_raw_line_data, load_raw_accessibility_1,
     load_raw_accessibility_2, load_raw_stop_data, load_raw_operators,
     load_raw_bike_parking_data, load_raw_transport_subtypes, load_raw_parking_data,
-    load_raw_transport_types, load_raw_occupancy_data
+    load_raw_transport_types, load_raw_occupancy_data, load_raw_toilets
 )
 
 # Import curated schema functions
@@ -57,6 +57,7 @@ dag = DAG(
     schedule_interval='@daily',
     start_date=datetime(2024, 1, 1),
     catchup=False,
+    max_active_tasks=1,
 )
 
 # Establish Snowflake connection
@@ -76,7 +77,8 @@ function_mapping = {
     "load_raw_transport_subtypes": load_raw_transport_subtypes,
     "load_raw_parking_data": load_raw_parking_data,
     "load_raw_transport_types": load_raw_transport_types,
-    "load_raw_occupancy_data": load_raw_occupancy_data
+    "load_raw_occupancy_data": load_raw_occupancy_data,
+    "load_raw_toilets": load_raw_toilets
 }
 
 # Create DAG tasks according to config.json file - separate tasks for each file & each frequency

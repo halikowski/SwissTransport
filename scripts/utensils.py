@@ -105,12 +105,13 @@ def get_downloaded_filename(download_dir: str) -> str:
         latest_file = max(list_of_files, key=os.path.getctime)
         # In case no file is being currently downloaded, get latest file name
         if not latest_file.endswith('.crdownload'):
+            time.sleep(2)
             return os.path.basename(latest_file)
         # Terminate after 20 min
         if time.time() - start_time > 1200:
             raise TimeoutError("Timed out waiting for the download to complete.")
 
-        time.sleep(10)
+        time.sleep(5)
 
 
 def snowsql_ingest(directory: str, filename: str, stg_folder: str) -> None:

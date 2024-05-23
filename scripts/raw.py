@@ -297,11 +297,11 @@ def load_raw_toilets(session: Session) -> None:
 
 def load_raw_parking_data(session: Session) -> None:
     """
-    Loads data from files at internal stage to tables raw_json_parking_data & raw_parking_data
+    Loads data from files at internal stage to tables raw_json_parking & raw_parking_data
     """
-    # Truncating table raw_json_parking_data
+    # Truncating table raw_json_parking
     try:
-        session.sql('truncate table raw_json_parking_data').collect()
+        session.sql('truncate table raw_json_parking').collect()
         logging.info('raw_parking_datatable successfully truncated')
     except Exception as e:
         logging.error('Error while truncating table raw_parking_data:', e)

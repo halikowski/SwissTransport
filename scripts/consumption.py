@@ -14,7 +14,6 @@ def update_transport_fact(session: Session) -> None:
     """
     transport_fact_df = session.sql("""
                                 select
-                                    transport_fact_seq.nextval as id,
                                     date,
                                     trip_id,
                                     operator_abbr,
