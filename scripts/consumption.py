@@ -49,7 +49,7 @@ def update_operators_dim(session: Session) -> None:
         select 
             operator_abbr, 
             count(*) as trips_count
-        FROM transport_fact
+        FROM consumption.transport_fact
         GROUP BY operator_abbr
     """)
     operators_dim_df = curated_operators_df.join(trips_count_df,
@@ -179,7 +179,7 @@ def update_vehicles_dim(session: Session) -> None:
         select 
             vehicle_id, 
             count(*) as vehicle_trips_count
-        FROM transport_fact
+        FROM consumption.transport_fact
         GROUP BY vehicle_id
     """)
     vehicles_dim_df = curated_vehicles_df.join(trips_per_vehicle_df,
