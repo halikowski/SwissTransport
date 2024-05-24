@@ -1,6 +1,6 @@
 {
     "daily": {
-        "files_directory": "/opt/airflow/transport/daily",
+        "dl_directory": "/opt/airflow/transport/daily/",
         "categories": [
             {
                 "name": "View Actual data",
@@ -8,12 +8,13 @@
                 "file_position": 0,
                 "file_format": "csv",
                 "destination": "daily",
-                "load_function": "load_raw_transport"
+                "load_function": "load_raw_transport",
+                "dl_sub_folder": "main_files"
             }
         ]
     },
     "weekly": {
-        "files_directory": "/opt/airflow/transport/weekly",
+        "dl_directory": "/opt/airflow/transport/weekly/",
         "categories": [
             {
                 "name": "View Further mobility data",
@@ -21,7 +22,8 @@
                 "file_position": 0,
                 "file_format": "zip",
                 "destination": "weekly/line_files",
-                "load_function": "load_raw_line_data"
+                "load_function": "load_raw_line_data",
+                "dl_sub_folder": "line_files"
             },
             {
                 "name": "View Service Points Master Data",
@@ -29,7 +31,8 @@
                 "file_position": 1,
                 "file_format": "csv",
                 "destination": "weekly/bfr_files",
-                "load_function": "load_raw_accessibility_1"
+                "load_function": "load_raw_accessibility_1",
+                "dl_sub_folder": "bfr_files"
             },
             {
                 "name": "View Service Points Master Data",
@@ -37,7 +40,8 @@
                 "file_position": 0,
                 "file_format": "zip",
                 "destination": "weekly/full_toilet_files",
-                "load_function": "load_raw_toilets"
+                "load_function": "load_raw_toilets",
+                "dl_sub_folder": "toilet_file"
             },
             {
                 "name": "View Service Points Master Data",
@@ -45,7 +49,8 @@
                 "file_position": 0,
                 "file_format": "zip",
                 "destination": "weekly/platform_files",
-                "load_function": "load_raw_accessibility_2"
+                "load_function": "load_raw_accessibility_2",
+                "dl_sub_folder": "platform_files"
             },
             {
                 "name": "View Service Points Master Data",
@@ -53,7 +58,8 @@
                 "file_position": 1,
                 "file_format": "xlsx",
                 "destination": "weekly/bav_files",
-                "load_function": "load_raw_stop_data"
+                "load_function": "load_raw_stop_data",
+                "dl_sub_folder": "bav_files"
             },
             {
                 "name": "View Business organisations",
@@ -61,12 +67,13 @@
                 "file_position": 0,
                 "file_format": "zip",
                 "destination": "weekly/org_files",
-                "load_function": "load_raw_operators"
+                "load_function": "load_raw_operators",
+                "dl_sub_folder": "org_files"
             }
         ]
     },
     "monthly": {
-        "files_directory": "/opt/airflow/transport/monthly",
+        "dl_directory": "/opt/airflow/transport/monthly/",
         "categories": [
             {
                 "name": "View Further mobility data",
@@ -74,7 +81,8 @@
                 "file_position": 0,
                 "file_format": "json",
                 "destination": "monthly/bike_files",
-                "load_function": "load_raw_bike_parking_data"
+                "load_function": "load_raw_bike_parking_data",
+                "dl_sub_folder": "bike_files"
             },
             {
               "name": "View Further mobility data",
@@ -82,7 +90,8 @@
               "file_position": 0,
               "file_format": "csv",
               "destination": "monthly/tsub_files",
-              "load_function": "load_raw_transport_subtypes"
+              "load_function": "load_raw_transport_subtypes",
+              "dl_sub_folder": "tsub_files"
             },
             {
               "name": "View Further mobility data",
@@ -90,7 +99,8 @@
               "file_position": 0,
               "file_format": "json",
               "destination": "monthly/parking_files",
-              "load_function": "load_raw_parking_data"
+              "load_function": "load_raw_parking_data",
+              "dl_sub_folder": "parking_files"
             },
             {
               "name": "View Further mobility data",
@@ -98,12 +108,13 @@
               "file_position": 1,
               "file_format": "csv",
               "destination": "monthly/tmode_files",
-              "load_function": "load_raw_transport_types"
+              "load_function": "load_raw_transport_types",
+              "dl_sub_folder": "tmode_files"
             }
         ]
     },
     "yearly": {
-        "files_directory": "/opt/airflow/transport/yearly",
+        "dl_directory": "/opt/airflow/transport/yearly/",
         "categories": [
             {
                 "name": "View Further mobility data",
@@ -111,7 +122,8 @@
                 "file_position": 0,
                 "file_format": "xlsx",
                 "destination": "yearly/occupancy_files",
-                "load_function": "load_raw_occupancy_data"
+                "load_function": "load_raw_occupancy_data",
+                "dl_sub_folder": "occupancy_files"
             }
         ]
     }

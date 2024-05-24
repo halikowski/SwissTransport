@@ -57,7 +57,6 @@ dag = DAG(
     schedule_interval='@daily',
     start_date=datetime(2024, 1, 1),
     catchup=False,
-    max_active_tasks=1,
 )
 
 # Establish Snowflake connection
@@ -88,7 +87,7 @@ with open('/opt/airflow/config/config.json', 'r') as f:
 raw_tasks = []
 
 for frequency, categories in config.items():
-    files_directory = categories['files_directory']
+    dl_directory = categories['dl_directory']
     for category in categories['categories']:
         category_name = category['name']
         dataset_link = category['dataset_link']
@@ -98,6 +97,10 @@ for frequency, categories in config.items():
         load_func_name = category['load_function']
         # Get function object using function_mapping dict
         load_func = function_mapping.get(load_func_name)
+        dl_sub_folder = category['dl_sub_folder']
+        # Set different download directory for each file to prevent filename retrieval errors when
+        # running parallel downloads
+        files_directory = os.path.join(dl_directory, dl_sub_folder)
 
         # Task for finding,downloading specified file from the Open Swiss Transport Data Website.
         # File format processing and minor changes are applied if necessary, depending on the file
