@@ -281,8 +281,8 @@ def update_curated_stop_municipality(session: Session) -> None:
                                    stop_city as city,
                                    municipality_id,
                                    sd.canton_id as canton_id,
-                                   coord_e,
-                                   coord_n,
+                                   replace(coord_e,' ','')::FLOAT as coord_e,
+                                   replace(coord_n,' ','')::FLOAT as coord_n,
                                    altitude
                                from raw_stop_data sd
                                inner join raw_occupancy_data od
