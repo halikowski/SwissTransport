@@ -285,7 +285,7 @@ def update_curated_stop_municipality(session: Session) -> None:
                                    replace(coord_n,' ','')::FLOAT as coord_n,
                                    altitude
                                from raw_stop_data sd
-                               inner join raw_occupancy_data od
+                               left join raw_occupancy_data od
                                on sd.stop_id = od.stop_id
                                """)
     # Create column 'sloid' by concatenating  modificated 'stop_id' str with prefix. It allows further joins
