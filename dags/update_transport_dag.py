@@ -1,6 +1,5 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
-from airflow.sensors.external_task import ExternalTaskSensor
 from airflow.utils.task_group import TaskGroup
 from datetime import datetime, timedelta
 import sys
@@ -30,8 +29,7 @@ hook = SnowflakeHook('snowflake_default')  # 'snowflake_default' is the name of 
 conn = hook.get_conn()
 sf_session = Session.builder.config("connection", conn).create()
 
-# DAG parameters and creation
-
+# DAG parameters
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -48,13 +46,6 @@ dag = DAG(
     schedule_interval=None,  # Triggered by completion of daily DAG
     start_date=datetime(2024, 1, 1),
     catchup=False,
-)
-
-# Sensor which waits for the preceding DAG to finish
-start_task = ExternalTaskSensor(
-    task_id='wait_for_daily_etl',
-    external_dag_id='transport_data_etl_daily',
-    mode='reschedule',
 )
 
 curated_functions = [
@@ -101,7 +92,7 @@ consumption_group = TaskGroup(group_id='consumption_tasks', dag=dag)
 # Task dependencies
 with curated_group:
     for task in curated_tasks:
-        start_task >> task
+        task
 
 with consumption_group:
     for curated_task in curated_tasks:

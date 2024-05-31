@@ -1,6 +1,8 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
+from airflow.operators.dagrun_operator import TriggerDagRunOperator
 from airflow.sensors.filesystem import FileSensor
+from airflow.utils.trigger_rule import TriggerRule
 from datetime import datetime, timedelta
 import json
 import os
@@ -156,7 +158,17 @@ def create_dag(frequency: str, schedule_interval: str):
             dag=dag,
         )
 
-        # Task dependencies
+    # Task for triggering the update_curated_consumption DAG right after the daily DAG runs successfully
+    if frequency == 'daily':
+        trigger_task = TriggerDagRunOperator(
+            task_id='trigger_task',
+            trigger_rule=TriggerRule.ALL_SUCCESS,
+            trigger_dag_id='update_curated_consumption',
+            dag=dag
+        )
+    # Task dependencies
+        download_file_task >> file_sensor_task >> ingest_file_task >> load_data_task >> cleanup_task >> trigger_task
+    else:
         download_file_task >> file_sensor_task >> ingest_file_task >> load_data_task >> cleanup_task
 
     return dag
