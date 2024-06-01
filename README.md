@@ -3,6 +3,8 @@ This is a Data Engineering project containing both web automation processes and 
 As a person highly interested and connected with transport and travel, i started searching for this topic related project opportunities and found an interesting open data platform:  
 [**Open-Data Platform Mobility Switzerland**](https://opentransportdata.swiss/en/)
 
+[PDF Project Overview](SWISS_TRANSPORT-Overview.pdf)
+
 This project consists of **fully automated ETL workflow** with following stages:
 - Scheduled download and processing of total **12 data files** with various formats (.csv, .xlsx, .json) - using **Selenium**
 - File downloads are divided into 4 separate frequencies: daily, weekly, monthly, yearly - depending on data type and data source update frequency
